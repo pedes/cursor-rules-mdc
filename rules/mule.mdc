@@ -1,0 +1,127 @@
+---
+description: >
+  Comprehensive best practices for MuleSoft projects, encompassing project structure, configuration management, dependency handling, and security considerations.
+globs:
+  - "**/*.xml"
+  - "**/pom.xml"
+  - "**/mule-artifact.json"
+  - "**/src/main/resources/**/*.yaml"
+  - "**/src/main/resources/**/*.properties"
+alwaysApply: true
+---
+# MuleSoft Project Best Practices
+
+## 1. Project Structure
+
+- **Organize configuration files**:
+  - Place all global configurations (e.g., HTTP listeners, database connections) in a dedicated `global.xml` file.
+  - Separate flows by functionality into distinct XML files (e.g., `api.xml`, `process.xml`, `error.xml`) to enhance maintainability.
+
+- **Directory conventions**:
+  - Store Mule configuration files in `src/main/mule/`.
+  - Keep environment-specific property files in `src/main/resources/properties/`.
+  - Place DataWeave scripts in `src/main/resources/dwl/`.
+  - Store API specifications (RAML files) in `src/main/resources/api/`.
+  - Maintain certificates in `src/main/resources/certs/`.
+
+## 2. Configuration Management
+
+- **Externalize configurations**:
+  - Avoid hardcoding values like `host` and `port` in XML files. Reference them from property files using `${}` syntax.
+
+- **Environment-specific properties**:
+  - Use separate YAML files for each environment, following the naming convention `{env}-properties.yaml` (e.g., `dev-properties.yaml`, `prod-properties.yaml`).
+
+- **Secure properties**:
+  - Store sensitive information in encrypted property files (e.g., `dev-secure-properties.yaml`) and reference them appropriately.
+
+- **Global property declaration**:
+  - Define the environment variable `env` as a global property with a default value:
+    ```xml
+    <global-property name="env" value="dev" doc:name="Environment"/>
+    ```
+
+- **Configuration properties element**:
+  - Reference property files in `global.xml` using:
+    ```xml
+    <configuration-properties file="${env}-properties.yaml" doc:name="Configuration properties"/>
+    ```
+
+## 3. Dependency Management
+
+- **Mule Runtime consistency**:
+  - Ensure the Mule Runtime version specified in `pom.xml` matches the version in `mule-artifact.json`.
+
+- **Connector compatibility**:
+  - Verify connector versions are compatible with the Mule Runtime version by consulting the official MuleSoft documentation and release notes.
+
+- **Maven repository usage**:
+  - Retrieve connectors and dependencies from the MuleSoft Maven repository: `https://repository.mulesoft.org/releases/`.
+
+- **Dependency versions**:
+  - Avoid using snapshot versions in production. Always use stable, released versions.
+
+## 4. Security Best Practices
+
+- **Property encryption**:
+  - Encrypt sensitive properties using the MuleSoft Secure Properties Tool and reference them in secure property files.
+
+- **Access control**:
+  - Implement role-based access controls and ensure that flows and APIs are secured appropriately.
+
+- **Input validation**:
+  - Validate all external inputs to prevent injection attacks and other security vulnerabilities.
+
+- **Error handling**:
+  - Implement global error handling strategies in a dedicated `error.xml` file to manage exceptions gracefully.
+
+## 5. Development Practices
+
+- **Naming conventions**:
+  - Use lowercase letters and hyphens for file names (e.g., `api.xml`, `global.xml`).
+  - Adopt camelCase for flow and sub-flow names (e.g., `getCustomerDetails`).
+
+- **Code formatting**:
+  - Maintain consistent indentation and formatting across all XML and configuration files.
+
+- **Reusable components**:
+  - Create reusable flows and DataWeave scripts to promote code reuse and reduce duplication.
+
+- **Version control**:
+  - Exclude IDE-specific files and test resources from version control by updating the `.gitignore` file:
+    ```
+    .vscode/
+    src/test/resources/embedded*
+    ```
+
+## 6. Testing and Validation
+
+- **Unit testing**:
+  - Develop MUnit tests for all flows to ensure functionality and facilitate regression testing.
+
+- **Test data management**:
+  - Store test data and payloads in `src/test/resources/` for organized and maintainable test cases.
+
+- **Continuous integration**:
+  - Integrate automated testing into the CI/CD pipeline to catch issues early in the development cycle.
+
+## 7. Deployment Considerations
+
+- **Mule Maven Plugin**:
+  - Utilize the Mule Maven Plugin for building and deploying applications:
+    ```xml
+    <plugin>
+      <groupId>org.mule.tools.maven</groupId>
+      <artifactId>mule-maven-plugin</artifactId>
+      <version>3.7.1</version>
+      <extensions>true</extensions>
+    </plugin>
+    ```
+
+- **Deployment targets**:
+  - Configure deployments for environments like CloudHub, Runtime Fabric, or on-premises servers as per project requirements.
+
+- **Environment variables**:
+  - Manage environment-specific configurations using environment variables and ensure they are set appropriately during deployment.
+
+By adhering to these best practices, MuleSoft projects can achieve greater consistency, maintainability, and security across various environments and use cases.
