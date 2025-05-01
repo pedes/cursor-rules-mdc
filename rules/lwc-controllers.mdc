@@ -1,0 +1,122 @@
+---
+description: Best practices for Apex classes used as LWC controllers, focusing on performance, security, and usability from Lightning Web Components. Ensures proper annotations, CRUD/FLS enforcement, governor limit compliance, and secure API exposure.
+globs: **/lwc/**/*.cls
+---
+- # Apex LWC Controller Best Practices
+
+  This guide outlines standards for Apex classes that serve as backends for Lightning Web Components. It ensures your LWC controllers are secure, performant, and aligned with Salesforce's client-server architecture.
+
+- ## 1. General Structure
+
+  - Place controller classes in a dedicated namespace like `lwc`, `api`, or `ui`.
+  - Use a naming convention like `MyComponentController.cls` to match the related component.
+
+  ```apex
+  public with sharing class MyComponentController {
+      @AuraEnabled(cacheable=true)
+      public static List<Account> getAccounts() {
+          // logic
+      }
+  }
+  ```
+
+2. Required Annotations
+Use @AuraEnabled to expose methods or properties.
+
+Use cacheable=true for read-only methods that can be cached on the client.
+
+Avoid @AuraEnabled without static unless necessary.
+
+Only expose the minimum required methods.
+
+Avoid exposing entire SObject types unless necessary — prefer DTOs (Data Transfer Objects).
+
+3. CRUD and FLS Enforcement
+Always enforce CRUD and FLS before performing any DML or returning SObject fields.
+```apex
+Schema.SObjectField[] fields = new List<Schema.SObjectField>{
+    Account.Name, Account.Industry
+};
+SObjectAccessDecision decision = Security.stripInaccessible(AccessType.READABLE, accounts, fields);
+```
+
+Never return fields that a user doesn’t have permission to view.
+
+4. Governor Limits and Bulk Safety
+Avoid DML or SOQL inside loops.
+
+Use maps, collections, and pre-aggregation where possible.
+
+Respect limits like:
+
+100 SOQL queries per transaction
+
+150 DML statements
+
+CPU time
+
+5. Security Best Practices
+with sharing: Use with sharing unless there’s a clear need for system-level access.
+
+Avoid exposing internal logic or sensitive metadata.
+
+Input validation: Validate all parameters passed from the client.
+```apex
+if (String.isBlank(inputName)) {
+    throw new AuraHandledException('Invalid input');
+}
+```
+Do not expose raw errors to the client; wrap with AuraHandledException where needed.
+
+6. Return Types and Serialization
+Use lightweight DTOs instead of returning entire SObjects when possible.
+
+Ensure returned data is JSON-serializable (e.g., no circular references).
+
+Do not expose sensitive fields in return objects.
+
+7. Caching and Performance
+Use @AuraEnabled(cacheable=true) where applicable for read-only methods.
+
+Avoid unnecessary queries and logic for UI-invoked methods.
+
+Leverage @wire with cacheable methods to improve LWC performance.
+
+8. Naming and Documentation
+Name methods clearly based on their action (getOpenCases, createTaskForUser).
+
+Use comments to describe purpose, expected inputs, and security constraints.
+
+Group related logic into cohesive classes. Avoid massive multipurpose controllers.
+
+9. Testing
+Write unit tests for each exposed method, testing both valid and invalid scenarios.
+
+Use @testSetup to create data.
+
+Assert returned results and security filters.
+```apex
+@isTest
+private class MyComponentControllerTest {
+    @isTest static void testGetAccounts() {
+        Test.startTest();
+        List<Account> result = MyComponentController.getAccounts();
+        Test.stopTest();
+
+        System.assertNotEquals(null, result);
+        System.assert(!result.isEmpty());
+    }
+}
+```
+10. Common Pitfalls
+Returning too much data to the client.
+
+Not filtering based on user access.
+
+Failing to enforce FLS or CRUD checks.
+
+No @AuraEnabled(cacheable=true) when applicable.
+
+Using without sharing without documented justification.
+
+By following these guidelines, your LWC controllers will be scalable, secure, and performant while offering a consistent and maintainable API to front-end components.
