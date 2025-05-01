@@ -1,0 +1,143 @@
+---
+description: Best practices for Apex development on Salesforce, including code structure, bulk-safe patterns, test coverage, security, and governor limit considerations. Guides developers toward scalable, secure, and maintainable Apex code.
+globs: **/*.cls
+---
+- # Salesforce Apex Best Practices
+
+  This guide provides actionable best practices for developing Apex code within the Salesforce platform. It covers code structure, platform limits, security, test strategies, and common pitfalls to help ensure your code is maintainable, scalable, and platform-compliant.
+
+- ## 1. Code Structure and Organization
+
+  - **File Naming Conventions:**
+    - Use `PascalCase` for class names (e.g., `AccountService`, `OpportunityTriggerHandler`).
+    - Use `camelCase` for methods and variables.
+    - Prefix test classes with `Test` or suffix them with `Test` (e.g., `AccountServiceTest`).
+
+  - **Class Design:**
+    - Use a **Service Layer** pattern to encapsulate business logic.
+    - Separate logic into **Trigger Handlers**, **Service Classes**, **Helper Classes**, and **Utility Classes**.
+
+  - **Avoid Logic in Triggers:**
+    - Keep triggers thin. Delegate logic to handler classes.
+    - Use a unified `TriggerHandler` framework for consistency and reusability.
+
+- ## 2. Platform Limits and Bulk-Safe Patterns
+
+  - **Bulkification:**
+    - Always design logic to handle **multiple records**.
+    - Avoid SOQL and DML inside loops.
+
+  - **Governor Limits:**
+    - Respect key limits: SOQL (100), DML (150), CPU time, heap size.
+    - Use `Limits` class to monitor and log remaining limits in critical paths.
+
+  - **Efficient Queries:**
+    - Use `SELECT` only required fields.
+    - Prefer `Map<Id, SObject>` to cache queried records.
+    - Use subqueries and relationship queries wisely to reduce round-trips.
+
+- ## 3. Security and Sharing
+
+  - **Enforce Sharing:**
+    - Use `with sharing` for domain-level logic unless there's a reason not to.
+    - Avoid hardcoding user access logic. Use `Schema.SObjectType` and `Security.stripInaccessible`.
+
+  - **CRUD/FLS Enforcement:**
+    - Always check **CRUD and FLS** when accessing objects or fields programmatically.
+    - Use `Security.stripInaccessible` in LWC controllers and service classes.
+
+  - **Avoid Hardcoded IDs:**
+    - Reference metadata like RecordTypes or Queues via queries or `CustomMetadata`.
+
+- ## 4. Testing Best Practices
+
+  - **Coverage:**
+    - Achieve **at least 75% test coverage**, but focus on meaningful assertions, not just line execution.
+  
+  - **Test Isolation:**
+    - Use `@testSetup` methods for common data creation.
+    - Avoid dependencies on existing org data (always use `SeeAllData=false`).
+
+  - **Negative Testing:**
+    - Write tests for error conditions (e.g., null inputs, invalid access).
+
+  - **Asynchronous Testing:**
+    - Test `@future`, `Queueable`, and `Batchable` code using `Test.startTest()` and `Test.stopTest()`.
+
+  - **Naming:**
+    - Use clear and descriptive test method names (`testHandleInsertWithValidData()`).
+
+- ## 5. Design Patterns and Anti-patterns
+
+  - **Recommended Patterns:**
+    - **Trigger Handler Pattern** for modular triggers.
+    - **Service Layer** for business logic orchestration.
+    - **Strategy Pattern** for dynamic behavior execution.
+    - **Factory Pattern** for mocking or dynamic instantiation.
+
+  - **Anti-patterns:**
+    - Logic in triggers.
+    - DML/SOQL in loops.
+    - Overuse of static variables for cross-transaction data sharing.
+    - Catching and swallowing exceptions without logging.
+
+- ## 6. Asynchronous Processing
+
+  - **When to Use:**
+    - Use async patterns (Queueable, Batchable, Future, Schedulable) for long-running or non-blocking tasks.
+
+  - **Best Practices:**
+    - Prefer `Queueable` over `@future`.
+    - Chain batch jobs using `Database.executeBatch()` and `finish()` method.
+
+  - **Limits:**
+    - Avoid exceeding concurrent execution limits.
+    - Track async jobs using `AsyncApexJob` if needed.
+
+- ## 7. Logging and Monitoring
+
+  - **Custom Logging:**
+    - Implement custom logging frameworks with custom objects or platform events if needed.
+
+  - **Debug Logs:**
+    - Use `System.debug()` with log levels during development, but remove excessive logging in production.
+
+  - **Error Handling:**
+    - Use meaningful messages.
+    - Don’t expose internal errors to end-users.
+    - Consider using `CustomException` classes.
+
+- ## 8. Deployment and CI/CD
+
+  - **Metadata Consistency:**
+    - Deploy triggers, classes, and metadata in sync to avoid runtime errors.
+
+  - **Use of Scratch Orgs and SFDX:**
+    - Adopt SFDX with source tracking and automation pipelines.
+    - Use unlocked packages for modular and reusable code.
+
+  - **Validation:**
+    - Use `force:source:deploy` with `--checkonly` to validate deployments pre-merge.
+
+- ## 9. Tooling and Environment
+
+  - **Recommended Tools:**
+    - **VS Code + Salesforce Extension Pack**
+    - **PMD Apex ruleset** for static analysis.
+    - **Prettier Plugin** for consistent formatting.
+    - **SFDX CLI** for scripting and automation.
+
+  - **Environment Setup:**
+    - Use `.sfdx` project structure.
+    - Keep `sfdx-project.json` well organized with clear namespace/package info.
+
+- ## 10. Common Pitfalls
+
+  - Not bulkifying logic (DML/SOQL in loops).
+  - Failing to enforce FLS/CRUD.
+  - Hardcoding record type or user IDs.
+  - Uncaught exceptions.
+  - Using `SeeAllData=true` in tests.
+  - Excessive reliance on static variables for data persistence.
+
+By following these best practices, you can develop Apex code that is maintainable, performant, secure, and aligned with Salesforce's platform constraints and long-term evolution.
