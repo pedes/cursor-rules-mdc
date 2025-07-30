@@ -79,7 +79,7 @@ alwaysApply: true
 
 - **Naming conventions**:
   - Use lowercase letters and hyphens for file names (e.g., `api.xml`, `global.xml`).
-  - Adopt camelCase for flow and sub-flow names (e.g., `getCustomerDetails`).
+  - Adopt kebab-case for flow and sub-flow names (e.g., `get-customer-details`).
 
 - **Code formatting**:
   - Maintain consistent indentation and formatting across all XML and configuration files.
